@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Toaster } from "react-hot-toast"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
@@ -13,32 +13,74 @@ import AuthLayout from "./layout/AuthLayout"
 
 function App() {
 
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [showInstall, setShowInstall] = useState(false)
+
   useEffect(() => {
-    let deferredPrompt;
 
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
+    const handler = (e) => {
+      e.preventDefault()
+      setInstallPrompt(e)
+      setShowInstall(true)
+    }
 
-      const btn = document.getElementById("installBtn");
-      if(btn){
-        btn.style.display = "block";
+    window.addEventListener("beforeinstallprompt", handler)
 
-        btn.addEventListener("click", () => {
-          deferredPrompt.prompt();
-        });
-      }
-    });
-  }, []);
+    return () => window.removeEventListener("beforeinstallprompt", handler)
+
+  }, [])
+
+  const installApp = async () => {
+    if (!installPrompt) return
+
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+
+    if (outcome === "accepted") {
+      setShowInstall(false)
+    }
+  }
 
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
 
-      {/* Install Button */}
-      <button id="installBtn" style={{display:"none",position:"fixed",bottom:"20px",right:"20px",padding:"10px"}}>
-        Install ChatVibe
-      </button>
+      {/* INSTALL BANNER */}
+      {showInstall && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-white shadow-xl rounded-2xl border flex items-center justify-between p-3 z-50">
+
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white font-bold">
+              CV
+            </div>
+
+            <div className="text-sm">
+              <p className="font-semibold">Install ChatVibe</p>
+              <p className="text-gray-500 text-xs">
+                Faster experience like an app
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+
+            <button
+              onClick={installApp}
+              className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600"
+            >
+              Install
+            </button>
+
+            <button
+              onClick={() => setShowInstall(false)}
+              className="text-gray-400 hover:text-black text-lg"
+            >
+              ✕
+            </button>
+
+          </div>
+        </div>
+      )}
 
       <BrowserRouter>
         <Routes>
