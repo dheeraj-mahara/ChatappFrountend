@@ -10,6 +10,7 @@ import Chatpage from "./pages/Chatpage"
 import Postpage from "./pages/Postpage"
 import Callpage from "./pages/Callpage"
 import AuthLayout from "./layout/AuthLayout"
+import Logoimage from "./assets/images.png";
 
 function App() {
 
@@ -51,7 +52,7 @@ function App() {
 
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-white font-bold">
-              <img src="src\assets\images.png" alt="" />
+              <img src={Logoimage}  alt="" />
             </div>
 
             <div className="text-sm">
