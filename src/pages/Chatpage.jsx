@@ -19,7 +19,11 @@ export default function Chatpage() {
   
   // Check if a chat is currently active
   const isChatOpen = Boolean(receiverId);
-  const selectedUser = showUser.find((u) => String(u.id) === String(receiverId));
+  
+
+  const selectedUser =
+  showUser.find((u) => String(u.id) === String(receiverId)) ||
+  allusers.find((u) => String(u.id) === String(receiverId));
 
   useEffect(() => {
     const initChat = async () => {

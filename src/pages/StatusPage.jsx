@@ -8,14 +8,34 @@ export default function StatusPage() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [statuses, setStatuses] = useState([])
+const [chatUsers, setChatUsers] = useState([]);
+
+
+const getChatUsers = async () => {
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/chat`, {
+      withCredentials: true,
+    });
+
+    if (res.data.success) {
+      setChatUsers(res.data.users); 
+    }
+  } catch (err) {
+    console.error("Chat users load error:", err);
+  }
+};
 
   const getallststus = async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/status/all`, {
         withCredentials: true,
       });
-      if (res.data.success) {
-        const formattedStatuses = res.data.statuses.map((userGroup) => {
+      if (res.data.success) {  
+          const chatIds = chatUsers.map(u => String(u.id));
+      
+        const formattedStatuses = res.data.statuses
+         .filter(statusGroup => chatIds.includes(String(statusGroup.userId)))
+        .map((userGroup) => {
           const latestStatus = userGroup.statuses[0];
 
 
@@ -32,9 +52,7 @@ export default function StatusPage() {
             isUser: false,
             viewed: false,
           };
-        },[]);
-
-
+        });
         setStatuses(formattedStatuses);
         
       }
@@ -43,9 +61,14 @@ export default function StatusPage() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
+  getChatUsers();
+}, []);
+useEffect(() => {
+  if (chatUsers.length > 0) {
     getallststus();
-  }, [getallststus]);
+  }
+}, [chatUsers]); 
 
 
   const handleAddStatusBackend = async (statusData) => {

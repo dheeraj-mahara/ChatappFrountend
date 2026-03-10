@@ -22,6 +22,11 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
 
     );
   }, [search, allusers]);
+  
+  const handleUserClick = (id) => {
+  navigate(`/chat/${id}`);
+  setSearch(""); 
+};
 
   return (
     <div className=" h-full bg-white border-r border-gray-100 flex flex-col shadow-2xl overflow-hidden">
@@ -62,14 +67,14 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
           <div className="px-2">
             <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Search Results</p>
             {searchResults.length > 0 ? (
-              searchResults.map((user) => (
+              searchResults.map((user) => (                
                 <UserItem
                   key={user.id}
                   user={user}
-                  onClick={() => { navigate(`/chat/${user.id}`); setSearch(""); }}
-                  isSearch
-                />
+onClick={() => handleUserClick(user.id)}                />
+                
               ))
+              
             ) : (
               <div className="text-center py-10 text-gray-400 text-sm">No users match "{search}"</div>
             )}
@@ -83,6 +88,7 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
                 key={user.id}
                 user={user}
                 isActive={String(receiverId) === String(user.id)}
+                onClick={() => handleUserClick(user.id)}
                 formatTime={formatTime}
               />
             ))}
@@ -93,12 +99,10 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
   );
 }
 
-function UserItem({ user, isActive, formatTime, isSearch = false }) {
-  const navigate = useNavigate();
-
+function UserItem({ user, isActive, formatTime, isSearch , onClick }) {
   return (
 
-    <div onClick={() => navigate(`/chat/${user.id}`)} className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>
+    <div onClick={onClick} className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>
       <div className="relative">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
           {user.name.charAt(0).toUpperCase()}

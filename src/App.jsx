@@ -50,8 +50,8 @@ function App() {
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-white shadow-xl rounded-2xl border flex items-center justify-between p-3 z-50">
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white font-bold">
-              CV
+            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-white font-bold">
+              <img src="src\assets\images.png" alt="" />
             </div>
 
             <div className="text-sm">

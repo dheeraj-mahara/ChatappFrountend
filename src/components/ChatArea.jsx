@@ -7,7 +7,6 @@ import { Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function ChatArea({ selectedUser, currentUser, onBack }) {
-
   const { receiverId } = useParams();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
