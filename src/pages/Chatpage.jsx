@@ -5,6 +5,7 @@ import socket from "../socket";
 import UserList from "../components/UserList";
 import ChatArea from "../components/ChatArea";
 import Logoimage from "../assets/images.png";
+import AllUsers from "../components/AllUsers";
 
 
 export default function Chatpage() {
@@ -16,14 +17,18 @@ export default function Chatpage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showUser, setshowUser] = useState([]);
+
+  const seealluser = location.pathname == "/chat/users"
   
-  // Check if a chat is currently active
-  const isChatOpen = Boolean(receiverId);
   
 
+  // Check if a chat is currently active
+  const isChatOpen = Boolean(receiverId);
+
+
   const selectedUser =
-  showUser.find((u) => String(u.id) === String(receiverId)) ||
-  allusers.find((u) => String(u.id) === String(receiverId));
+    showUser.find((u) => String(u.id) === String(receiverId)) ||
+    allusers.find((u) => String(u.id) === String(receiverId));
 
   useEffect(() => {
     const initChat = async () => {
@@ -58,13 +63,13 @@ export default function Chatpage() {
 
     socket.on("onlineUsers", (onlineUserIds) => {
 
-  const updatedUsers = users.map(u => ({
-    ...u,
-    online: onlineUserIds.includes(u.id)
-  }));
+      const updatedUsers = users.map(u => ({
+        ...u,
+        online: onlineUserIds.includes(u.id)
+      }));
 
-  setshowUser(updatedUsers);
-});
+      setshowUser(updatedUsers);
+    });
     return () => {
       socket.off("updateUserStatus");
       socket.disconnect();
@@ -103,11 +108,19 @@ export default function Chatpage() {
     <div className="h-[100%] w-full flex bg-white overflow-hidden font-sans antialiased">
 
       <div className={`${isChatOpen ? "hidden" : "flex"} md:flex w-full md:w-[350px]  border-r border-gray-100 flex-col bg-white`}>
-        <UserList
-          users={showUser}
-          allusers={allusers}
-          currentUser={currentUser}
-        />
+        {seealluser ? (
+          <AllUsers allusers={allusers} />
+
+        ) : (
+          <UserList
+            users={showUser}
+            allusers={allusers}
+            currentUser={currentUser}
+          />
+         )
+
+        } 
+
       </div>
 
       <div className={`${!isChatOpen ? "hidden" : "flex"} md:flex flex-1 flex-col bg-gray-50`}>
@@ -120,7 +133,7 @@ export default function Chatpage() {
         ) : (
           <div className="hidden md:flex flex-1 items-center justify-center flex-col text-gray-400 p-8 text-center">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-         
+
               <img className="h-[50%] grayscale-[1] " src={Logoimage} alt="" />
             </div>
             <h2 className="text-xl font-semibold text-gray-700">Your Messages</h2>

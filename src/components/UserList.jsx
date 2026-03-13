@@ -16,24 +16,24 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
     const query = search.toLowerCase().trim();
     if (!query) return [];
 
-    return allusers.filter(user =>
+    return users.filter(user =>
       user.name.toLowerCase().includes(query) ||
       user.contact?.toLowerCase().includes(query)
 
     );
-  }, [search, allusers]);
-  
+  }, [search, users]);
+
   const handleUserClick = (id) => {
-  navigate(`/chat/${id}`);
-  setSearch(""); 
-};
+    navigate(`/chat/${id}`);
+    setSearch("");
+  };
 
   return (
-    <div className=" h-full bg-white border-r border-gray-100 flex flex-col shadow-2xl overflow-hidden">
+    <div className=" relative h-full bg-white border-r border-gray-100 flex flex-col shadow-2xl overflow-hidden">
       {/* Header */}
       <div className="px-6 py-5 bg-white flex items-center justify-between">
         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-<span>{currentUser?.name || "Loading..."}</span>
+          <span>{currentUser?.name || "Loading..."}</span>
         </h1>
         <div className="h-8 text-xl opacity-70 hover:opacity-100 transition-opacity">
           <img className="h-full w-full" src={Logoimage} />
@@ -67,14 +67,14 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
           <div className="px-2">
             <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Search Results</p>
             {searchResults.length > 0 ? (
-              searchResults.map((user) => (                
+              searchResults.map((user) => (
                 <UserItem
                   key={user.id}
                   user={user}
-onClick={() => handleUserClick(user.id)}                />
-                
+                  onClick={() => handleUserClick(user.id)} />
+
               ))
-              
+
             ) : (
               <div className="text-center py-10 text-gray-400 text-sm">No users match "{search}"</div>
             )}
@@ -94,12 +94,28 @@ onClick={() => handleUserClick(user.id)}                />
             ))}
           </div>
         )}
+
       </div>
+  <button
+  onClick={() => navigate("/chat/users")}
+  className="group absolute bottom-8 right-8 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-blue-500 text-white shadow-[0_10px_25px_-5px_rgba(37,99,235,0.4)] transition-all duration-300 hover:scale-110 hover:shadow-[0_15px_30px_-5px_rgba(37,99,235,0.6)] active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    fill="none" 
+    viewBox="0 0 24 24" 
+    strokeWidth={2.5} 
+    stroke="currentColor" 
+    className="w-6 h-6 transition-transform duration-300 group-hover:rotate-90"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+  </svg>
+</button>
     </div>
   );
 }
 
-function UserItem({ user, isActive, formatTime, isSearch , onClick }) {
+function UserItem({ user, isActive, formatTime, isSearch, onClick }) {
   return (
 
     <div onClick={onClick} className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>

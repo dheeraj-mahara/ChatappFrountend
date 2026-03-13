@@ -92,6 +92,7 @@ function App() {
 
           <Route path="/" element={<MainLayout />} >
             <Route index element={<Chatpage />} />
+            <Route path="/chat/users" element={<Chatpage/>} />
             <Route path="/chat/:receiverId" element={<Chatpage />} />
             <Route path="status" element={<StatusPage />} />
             <Route path="profile" element={<ProfilePage />} />
