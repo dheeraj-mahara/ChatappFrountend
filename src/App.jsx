@@ -11,9 +11,14 @@ import Postpage from "./pages/Postpage"
 import Callpage from "./pages/Callpage"
 import AuthLayout from "./layout/AuthLayout"
 import Logoimage from "./assets/images.png";
+import axios from "axios";
+import { messaging } from "./firebase";
+import { getToken } from "firebase/messaging";
+import { useAuth } from "./context/AuthContext";
 
 function App() {
 
+  const { currentUser, loading } = useAuth();
   const [installPrompt, setInstallPrompt] = useState(null)
   const [showInstall, setShowInstall] = useState(false)
 
@@ -42,6 +47,32 @@ function App() {
     }
   }
 
+  useEffect(() => {
+
+    Notification.requestPermission().then((permission) => {
+  if (!currentUser) return;
+
+      if (permission === "granted") {
+
+        getToken(messaging, {
+          vapidKey: "BHMc1PflVgXppKk2jfzMUCaT-z8CKkT1XMHUdYkqw2iKKsawsYKMah7Bfv--AfqALcDg25Y80xHt2o_6kobAT1c"
+        }).then((token) => {
+
+
+          axios.post(`${import.meta.env.VITE_API_URL}/api/notification/save-token`, {
+          userId: currentUser.userid,
+          token: token
+        });
+
+        });
+        
+
+      }
+
+    });
+  }, [currentUser]);
+  
+
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
@@ -52,7 +83,7 @@ function App() {
 
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-white font-bold">
-              <img src={Logoimage}  alt="" />
+              <img src={Logoimage} alt="" />
             </div>
 
             <div className="text-sm">
@@ -92,7 +123,7 @@ function App() {
 
           <Route path="/" element={<MainLayout />} >
             <Route index element={<Chatpage />} />
-            <Route path="/chat/users" element={<Chatpage/>} />
+            <Route path="/chat/users" element={<Chatpage />} />
             <Route path="/chat/:receiverId" element={<Chatpage />} />
             <Route path="status" element={<StatusPage />} />
             <Route path="profile" element={<ProfilePage />} />

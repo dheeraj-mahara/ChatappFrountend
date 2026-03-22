@@ -40,7 +40,6 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
         </div>
       </div>
 
-      {/* Search Input Area */}
       <div className="px-4 pb-4">
         <div className="relative">
           <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
@@ -90,6 +89,7 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
                 isActive={String(receiverId) === String(user.id)}
                 onClick={() => handleUserClick(user.id)}
                 formatTime={formatTime}
+                currentUser={currentUser}
               />
             ))}
           </div>
@@ -115,10 +115,10 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
   );
 }
 
-function UserItem({ user, isActive, formatTime, isSearch, onClick }) {
+function UserItem({ user, isActive, formatTime, isSearch, onClick , currentUser }) {
   return (
-
     <div onClick={onClick} className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>
+      
       <div className="relative">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
           {user.name.charAt(0).toUpperCase()}
@@ -129,7 +129,8 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick }) {
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-baseline">
           <p className={`font-semibold truncate ${isActive ? "text-blue-900" : "text-gray-800"}`}>
-            {user.name}
+  {user.name === currentUser.name ? `${user.name} (you)`: user.name}
+  
           </p>
           {formatTime && (
             <span className="text-[11px] font-medium text-gray-400">
