@@ -3,8 +3,10 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import socket from "../socket";
 import { FiArrowLeft } from "react-icons/fi";
-import { Trash2, X } from "lucide-react";
+import { Copy, Download, MoreVertical, Share2, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { MdPermMedia } from "react-icons/md";
+
 
 export default function ChatArea({ selectedUser, currentUser, onBack }) {
   const { receiverId } = useParams();
@@ -15,10 +17,16 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
   const [previewImage, setPreviewImage] = useState(null);
   const [bigImage, setbigImage] = useState(null);
   const [imgLoading, setImgLoading] = useState(true);
+  const prevLengthRef = useRef(messages.length);
+  const [showMenu, setShowMenu] = useState(false);
+  const [typingUser, setTypingUser] = useState(false);
 
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > prevLengthRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevLengthRef.current = messages.length;
   }, [messages]);
 
   useEffect(() => {
@@ -75,6 +83,7 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
       imageUrl: imageFile ? URL.createObjectURL(imageFile) : null,
       createdAt: new Date().toISOString(),
       pending: true,
+      status: "sent"
     };
 
     setMessages((prev) => [...prev, tempMessage]);
@@ -98,7 +107,10 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
         setMessages((prev) =>
           prev.map((m) =>
             m._id === tempId
-              ? { ...savedMessage, imageUrl: savedMessage.imageUrl || m.imageUrl }
+              ? {
+                ...savedMessage, imageUrl: savedMessage.imageUrl || m.imageUrl,
+                status: "sent"
+              }
               : m
           )
         );
@@ -108,6 +120,95 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
       setMessages((prev) => prev.filter((m) => m._id !== tempId));
     }
   };
+
+
+  useEffect(() => {
+    if (!selectedUser) return;
+
+    const unreadIds = messages
+      .filter(
+        (m) =>
+          m.senderId === selectedUser.id && m.status !== "read"
+      )
+      .map((m) => m._id);
+
+    if (unreadIds.length > 0) {
+      socket.emit("markAsRead", {
+        senderId: selectedUser.id,
+        messageIds: unreadIds
+      });
+    }
+
+  }, [selectedUser, messages]);
+
+  useEffect(() => {
+    socket.on("messageRead", ({ messageIds }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          messageIds.includes(String(m._id))
+            ? { ...m, status: "read" }
+            : m
+        )
+      );
+    });
+
+    return () => socket.off("messageRead");
+  }, []);
+
+  useEffect(() => {
+    socket.on("messageDelivered", ({ messageId }) => {
+
+      setMessages((prev) =>
+        prev.map((m) => {
+          return String(m._id) === String(messageId)
+            ? { ...m, status: "delivered" }
+            : m;
+        })
+      );
+    });
+
+    return () => socket.off("messageDelivered");
+  }, []);
+
+  const handleTyping = (e) => {
+    setText(e.target.value);
+
+    socket.emit("typing", {
+      senderId: currentUser.id,
+      receiverId: selectedUser.id
+    });
+
+    clearTimeout(window.typingTimeout);
+    window.typingTimeout = setTimeout(() => {
+      socket.emit("stopTyping", {
+        senderId: currentUser.id,
+        receiverId: selectedUser.id
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    socket.on("typing", ({ senderId }) => {
+
+      if (senderId === selectedUser.id) {
+        setTypingUser(true);
+      }
+    });
+
+    socket.on("stopTyping", ({ senderId }) => {
+      if (senderId === selectedUser.id) {
+        setTypingUser(false);
+      }
+    });
+
+    return () => {
+      socket.off("typing");
+      socket.off("stopTyping");
+    };
+  }, [selectedUser]);
+
+
+
 
   const getMessageDateLabel = (dateString) => {
     if (!dateString) return "";
@@ -157,11 +258,63 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
     }
   };
 
+  const handleShareImage = async () => {
+    try {
+      const response = await fetch(bigImage.imageUrl);
+      const blob = await response.blob();
+
+      const file = new File([blob], "image.jpg", { type: blob.type });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Shared Image",
+          text: bigImage.message || "",
+        });
+      } else {
+        toast.info("Sharing not supported on this device");
+      }
+    } catch (err) {
+      console.error("Share error:", err);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    try {
+      const response = await fetch(bigImage.imageUrl);
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "chat-vibe.jpg";
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  };
+
+  const handleCopyMessage = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied!");
+    } catch (err) {
+      console.error("Copy failed:", err);
+      toast.error("Failed to copy");
+    }
+  };
+
+
 
 
   return (
     <div className="flex-1 flex flex-col bg-[#F3F4F6] h-screen">
-      {/* CHAT HEADER */}
       <div className="px-6 py-3 border-b bg-white flex items-center gap-4 shadow-sm z-10">
 
         <button
@@ -197,8 +350,6 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
             : null;
 
 
-
-
           const showDateHeader = currentDate && currentDate !== previousDate;
           return (
             <React.Fragment key={msg._id || index}>
@@ -222,8 +373,17 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
                       <Trash2 size={16} />
                     </button>
                   )}
+                  {msg.message && (
+                    <button
+                      onClick={() => handleCopyMessage(msg.message)}
+                      className={`hidden group-hover:flex absolute top-2 p-1 text-gray-400 hover:text-blue-500 transition-all 
+                         ${isMe ? "-left-14" : "-right-7"}`}
+                      title="Copy Message"
+                    >
+                      <Copy size={16} />
+                    </button>
+                  )}
 
-                  {/* Bubble UI */}
                   <div className={`px-3 py-2 shadow-sm 
               ${isMe
                       ? "bg-blue-600 text-white rounded-2xl rounded-br-none"
@@ -239,16 +399,42 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
                       />
                     )}
                     {msg.message && <p className="text-[15px]">{msg.message}</p>}
+
                   </div>
 
 
-                  <span className="text-[10px] text-gray-400 mt-1 px-1">
-                    {msg.pending ? ( "• Sending..." ) : (
-                      msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit', minute: '2-digit', hour12: true
-                      }) : msg.time
+                  <div className="flex ">
+                    <div className="text-[10px] text-gray-400 mt-1 px-1">
+                      {msg.pending ? ("• Sending...") : (
+                        msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit', minute: '2-digit', hour12: true
+                        }) : msg.time
+                      )}
+                    </div>
+                    {isMe && (
+                      <div className="flex justify-end mt-1 text-xs">
+                        {msg.status === "sent" && (
+                          <span className="text-gray-300 font-bold">✓</span>
+                        )}
+
+
+                        {msg.status === "delivered" && (
+                          <>
+                            <span className="text-gray-300 font-bold tracking-[-4px]">✓</span>
+                            <span className="text-gray-300 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
+                          </>
+                        )}
+
+                        {msg.status === "read" && (
+                          <>
+                            <span className="text-blue-400 font-bold tracking-[-4px]">✓</span>
+                            <span className="text-blue-400 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
+                          </>
+                        )}
+                      </div>
                     )}
-                  </span>
+                  </div>
+
                 </div>
               </div>
             </React.Fragment>
@@ -276,47 +462,62 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
           </div>
         </div>
       )}
+
       {/* INPUT AREA */}
-      <div className="p-2 bg-white border-t">
-        <div className="max-w-4xl mx-auto flex items-end gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-200 focus-within:border-blue-400 transition-all">
+      <div>
+        {typingUser && (
+          <div className="flex items-center gap-1 px-3 py-2">
+            <span className="text-blue-600 text-sm font-medium">Typing</span>
 
-          <button
-            onClick={() => fileRef.current.click()}
-            className="px-1.5 py-1 text-gray-500 hover:bg-gray-200 rounded-xl transition-colors"
-          >
-            📸
-          </button>
-          <input
-            type="file"
-            ref={fileRef}
-            hidden
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                setPreviewImage(URL.createObjectURL(file));
-              }
-            }}
-          />
-          <textarea
-            rows="1"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            placeholder="Write a message..."
-            className="flex-1 bg-transparent border-none outline-none py-1.5 px-2 text-[15px] resize-none max-h-32"
-          />
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+              <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+              <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></span>
+            </div>
+          </div>
+        )}
+        <div className="p-2 bg-white border-t">
 
-          <button
-            onClick={sendMessage}
-            disabled={!text.trim() && !fileRef.current?.files?.[0]}
-            className={`py-1 px-2 rounded-xl transition-all ${text.trim() || previewImage ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "bg-gray-200  text-black"
-              }`}>Send
-          </button>
+          <div className="max-w-4xl mx-auto flex items-center gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-200 focus-within:border-blue-400 transition-all">
+
+            <button
+              onClick={() => fileRef.current.click()}
+              className="px-1.5  py-1 text-gray-500 hover:bg-gray-200 rounded-xl transition-colors"
+            >
+              <MdPermMedia color="black" />
+            </button>
+            <input
+              type="file"
+              ref={fileRef}
+              hidden
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  setPreviewImage(URL.createObjectURL(file));
+                }
+              }}
+            />
+            <textarea
+              rows="1"
+              value={text}
+              onChange={handleTyping}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              placeholder="Write a message..."
+              className="flex-1 bg-transparent border-none outline-none py-1.5 px-2 text-[15px] resize-none max-h-32"
+            />
+
+            <button
+              onClick={sendMessage}
+              disabled={!text.trim() && !fileRef.current?.files?.[0]}
+              className={`py-1 px-2 rounded-xl transition-all ${text.trim() || previewImage ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "bg-gray-200  text-black"
+                }`}>Send
+            </button>
+          </div>
         </div>
       </div>
 
@@ -327,27 +528,65 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
           className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
           onClick={() => { setbigImage(null); setImgLoading(true); }}
         >
-          <div className="absolute top-6 right-6 flex items-center gap-4">
-            {String(bigImage.senderId) === String(currentUser.id) && (
-              <button
-                className="p-3 bg-white/10 hover:bg-red-500/20 text-white hover:text-red-500 rounded-full transition-all border border-white/20"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteMessage(bigImage._id);
-                  setbigImage(null);
-                }}
-                title="Delete"
-              >
-                <Trash2 size={24} />
-              </button>
-            )}
+          <div className="absolute top-4 right-3 flex flex-col items-end gap-2">
 
             <button
-              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all border border-white/20"
-              onClick={() => { setbigImage(null); setImgLoading(true); }}
+              className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu((prev) => !prev);
+              }}
             >
-              <X size={24} />
+              <MoreVertical size={16} />
             </button>
+
+            {showMenu && (
+              <div className="flex flex-col gap-1 mt-1 bg-black/90 p-2 rounded-lg border border-white/10 shadow-md"
+                onClick={(e) => e.stopPropagation()} >
+
+                <button className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-white/10 rounded-md"
+                  onClick={() => {
+                    setbigImage(null);
+                    setImgLoading(true);
+                    setShowMenu(false);
+                  }}
+                >
+                  <X size={14} /> Close
+                </button>
+
+                {String(bigImage.senderId) === String(currentUser.id) && (
+                  <button className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-red-500/10 hover:text-red-400 rounded-md"
+                    onClick={() => {
+                      handleDeleteMessage(bigImage._id);
+                      setbigImage(null);
+                      setShowMenu(false);
+                    }}
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                )}
+
+                <button className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-blue-500/10 hover:text-blue-400 rounded-md"
+                  onClick={() => {
+                    handleShareImage();
+                    setShowMenu(false);
+                  }}
+                >
+                  <Share2 size={14} /> Share
+                </button>
+
+                <button
+                  className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-green-500/10 hover:text-green-400 rounded-md"
+                  onClick={() => {
+                    handleDownloadImage();
+                    setShowMenu(false);
+                  }}
+                >
+                  <Download size={14} /> Download
+                </button>
+
+              </div>
+            )}
           </div>
 
           {imgLoading && (
@@ -361,10 +600,11 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
             src={bigImage.imageUrl}
             alt="Preview"
             onLoad={() => setImgLoading(false)}
+            // onClick={() => { setbigImage(null); setImgLoading(true); }}
+
             className={`max-w-full max-h-[85vh] object-contain rounded-md shadow-2xl transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setbigImage(null) }}
           />
-          {/* Caption */}
           {!imgLoading && bigImage.message && (
             <p className="text-white/90 mt-6 text-lg bg-black/20 px-4 py-2 rounded-lg">{bigImage.message}</p>
           )}
