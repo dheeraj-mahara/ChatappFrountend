@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import Logoimage from "../assets/images.png";
 
 export default function UserList({ users = [], allusers = [], currentUser }) {
+
   const navigate = useNavigate();
   const { receiverId } = useParams();
   const [search, setSearch] = useState("");
@@ -120,26 +121,40 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
   return (
     <div onClick={onClick} className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>
 
-      <div className="relative">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
-          {user.name.charAt(0).toUpperCase()}
+      <div className="relative group">
+        <div className="w-12 h-12 rounded-2xl p-[2px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+
+          <div className="w-full h-full rounded-2xl bg-white overflow-hidden flex items-center justify-center text-gray-700 font-semibold text-lg">
+            {user.image ? (
+              <img
+                src={user.image}
+                alt="user"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-full h-full flex items-center justify-center">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
         </div>
-        {user.online && <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>}
+
+        {user.online && (
+          <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500 border-2 border-white"></span>
+          </span>
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-baseline">
           <p className={`font-semibold truncate ${isActive ? "text-blue-900" : "text-gray-800"}`}>
-            {user.name === currentUser.name ? `${user.name} (you)` : user.name}
-
-
+            {user?.name === currentUser?.name ? `${user?.name} (you)` : user?.name}
+            
           </p>
+        
           <div className="flex">
-
-            {user.senderId !== currentUser.id && user.lastMessageStatus == "delivered" && (
-              <div className="mr-2 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full"></div>
-            )}
-
 
             {formatTime && (
               <span className="text-[11px] font-medium text-gray-400">

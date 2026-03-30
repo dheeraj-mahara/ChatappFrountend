@@ -16,7 +16,7 @@ export default function StatusList({ statuses, onSelect, onAddStatus, loading })
     };
   }, [newStatus.preview]);
 
-  const handleFileChange =  (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (newStatus.preview) URL.revokeObjectURL(newStatus.preview);
@@ -29,26 +29,26 @@ export default function StatusList({ statuses, onSelect, onAddStatus, loading })
     }
   };
 
-  const handleSubmit = async (e) => { 
-  e.preventDefault();
-  
-  if (!newStatus.image && !newStatus.caption) {
-    return toast.error("Please add something first!");
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    await onAddStatus({
-      caption: newStatus.caption,
-      file: newStatus.image
-    });
+    if (!newStatus.image && !newStatus.caption) {
+      return toast.error("Please add something first!");
+    }
 
-    setNewStatus({ image: null, preview: "", caption: "" });
-    setIsModalOpen(false); 
-    
-  } catch (err) {
-    console.error("Submit error:", err);
-  }
-};
+    try {
+      await onAddStatus({
+        caption: newStatus.caption,
+        file: newStatus.image
+      });
+
+      setNewStatus({ image: null, preview: "", caption: "" });
+      setIsModalOpen(false);
+
+    } catch (err) {
+      console.error("Submit error:", err);
+    }
+  };
 
   return (
     <div className="w-full flex flex-col h-full bg-white relative">
@@ -63,10 +63,10 @@ export default function StatusList({ statuses, onSelect, onAddStatus, loading })
         <div className="relative flex-shrink-0">
           <div className="p-[2px] rounded-full bg-gradient-to-tr from-yellow-400 via-orange-500 to-fuchsia-600">
             <div className="bg-white p-[6px] rounded-full h-14 w-14 ">
-                      <img className="h-full w-full" src={Logoimage} />     
-          </div>
+              <img className="h-full w-full" src={Logoimage} />
             </div>
-           
+          </div>
+
           <div className="absolute bottom-0 right-0 bg-blue-500 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white text-white shadow-md">
             <Plus size={14} strokeWidth={3} />
           </div>
@@ -80,31 +80,37 @@ export default function StatusList({ statuses, onSelect, onAddStatus, loading })
 
       {/* Status List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-1">
-        {statuses.map((item) => (
+        {statuses.length == 0 ? (
+          <p className="text-center text-gray-400">No updates yet</p>
+        ) : (
 
+          statuses.map((item) => (
 
-          <div
-            key={item.id}
-            onClick={() => (item.isUser && !item.stories?.length) ? setIsModalOpen(true) : onSelect(item)}
-            className="flex items-center gap-4 p-3 hover:bg-gray-50 active:scale-[0.98] cursor-pointer rounded-xl transition-all"
-          >
-            <div className="relative flex-shrink-0">
-       <div className={`p-[2px] rounded-full transition-all duration-300 ${
-  item.viewed 
-    ? "bg-gray-300 !bg-none" // !bg-none gradient ko force-remove kar dega
-    : "bg-gradient-to-tr from-yellow-400 via-orange-500 to-fuchsia-600"
-}`}>
-                <div className="bg-white p-[2px] rounded-full">
-                  <img src={item.image} className="w-14 h-14 rounded-full object-cover" alt={item.name} />
+            <div
+              key={item.id}
+              onClick={() => (item.isUser && !item.stories?.length) ? setIsModalOpen(true) : onSelect(item)}
+              className="flex items-center gap-4 p-3 hover:bg-gray-50 active:scale-[0.98] cursor-pointer rounded-xl transition-all"
+            >
+              <div className="relative flex-shrink-0">
+                <div className={`p-[2px] rounded-full transition-all duration-300 ${item.viewed
+                  ? "bg-gray-300 !bg-none" // !bg-none gradient ko force-remove kar dega
+                  : "bg-gradient-to-tr from-yellow-400 via-orange-500 to-fuchsia-600"
+                  }`}>
+                  <div className="bg-white p-[2px] rounded-full">
+                    <img src={item.image} className="w-14 h-14 rounded-full object-cover" alt={item.name} />
+                  </div>
                 </div>
               </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-800">{item.name}</h3>
+                <p className="text-xs text-gray-500 uppercase">{item.time}</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-gray-800">{item.name}</h3>
-              <p className="text-xs text-gray-500 uppercase">{item.time}</p>
-            </div>
-          </div>
-        ))}
+          ))
+
+        )
+        }
+
       </div>
 
       {isModalOpen && (
@@ -162,7 +168,7 @@ export default function StatusList({ statuses, onSelect, onAddStatus, loading })
               </div>
 
               <button
-                type="submit" 
+                type="submit"
                 disabled={loading}
                 className={`w-full py-3 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                   }`}        >{loading ? (

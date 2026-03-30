@@ -38,7 +38,9 @@ export default function Chatpage() {
         });
 
         if (res.data.success) {
+          
           setCurrentUser(res.data.currentUser);
+          
           setUsers(res.data.users);
           setAllUsers(res.data.allUsers || []);
         }
@@ -77,7 +79,6 @@ export default function Chatpage() {
   }, [currentUser]);
 
 
-  // 3. Real-time User List Updates
   useEffect(() => {
     const handleUserUpdate = (data) => {
       setshowUser((prevUsers) => {

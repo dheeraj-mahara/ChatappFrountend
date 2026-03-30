@@ -23,29 +23,29 @@ export default function AllUsers({ allusers = [] }) {
   return (
     <div className="h-screen bg-white p-4 flex flex-col">
 
-     <div className="flex items-center gap-4 pb-3 px-2 border-b border-gray-100 ">
-  <button
-    onClick={() => navigate("/")}
-    className="group flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-600 transition-all hover:bg-gray-100 hover:text-blue-600 active:scale-90"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth="2.5"
-      stroke="currentColor"
-      className="h-5 w-5 transition-transform group-hover:-translate-x-0.5"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-    </svg>
-  </button>
+      <div className="flex items-center gap-4 pb-3 px-2 border-b border-gray-100 ">
+        <button
+          onClick={() => navigate("/")}
+          className="group flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-600 transition-all hover:bg-gray-100 hover:text-blue-600 active:scale-90"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2.5"
+            stroke="currentColor"
+            className="h-5 w-5 transition-transform group-hover:-translate-x-0.5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+        </button>
 
-  <div>
-    <h2 className="text-lg font-semibold tracking-tight text-gray-900">
-      Start New Chat
-    </h2>
-  </div>
-</div>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900">
+            Start New Chat
+          </h2>
+        </div>
+      </div>
 
       <input
         type="text"
@@ -64,8 +64,24 @@ export default function AllUsers({ allusers = [] }) {
               onClick={() => handleClick(user.id)}
               className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer flex gap-3"
             >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                {user.name.charAt(0).toUpperCase()}
+              <div className="relative group">
+                {/* Avatar */}
+                <div className="w-12 h-12 rounded-2xl p-[2px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+
+                  <div className="w-full h-full rounded-2xl bg-white overflow-hidden flex items-center justify-center text-gray-700 font-semibold text-lg">
+                    {user.image ? (
+                      <img
+                        src={user.image}
+                        alt="user"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-full h-full flex items-center justify-center">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div>
