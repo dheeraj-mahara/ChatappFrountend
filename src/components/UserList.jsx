@@ -1,12 +1,15 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useMemo } from "react";
 import Logoimage from "../assets/images.png";
+import { FaUser } from "react-icons/fa";
+import { FaPhoneAlt } from "react-icons/fa";
 
 export default function UserList({ users = [], allusers = [], currentUser }) {
 
   const navigate = useNavigate();
   const { receiverId } = useParams();
   const [search, setSearch] = useState("");
+
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
@@ -117,19 +120,21 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
 }
 
 function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }) {
-
+  const [selectedUser, setSelectedUser] = useState(null);
   return (
-    <div onClick={onClick} className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>
+    <div className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>
 
       <div className="relative group">
         <div className="w-12 h-12 rounded-2xl p-[2px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
 
-          <div className="w-full h-full rounded-2xl bg-white overflow-hidden flex items-center justify-center text-gray-700 font-semibold text-lg">
+          <div onClick={() => setSelectedUser(user)} className="w-full h-full rounded-2xl bg-white overflow-hidden flex items-center justify-center text-gray-700 font-semibold text-lg">
             {user.image ? (
               <img
                 src={user.image}
                 alt="user"
                 className="w-full h-full object-cover"
+
+
               />
             ) : (
               <span className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white w-full h-full flex items-center justify-center">
@@ -147,16 +152,18 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div onClick={onClick} className="flex-1 min-w-0">
         <div className="flex justify-between items-baseline">
           <p className={`font-semibold truncate ${isActive ? "text-blue-900" : "text-gray-800"}`}>
             {user?.name === currentUser?.name ? `${user?.name} (you)` : user?.name}
-            
+
           </p>
-        
+
           <div className="flex">
 
-            {formatTime && (
+
+
+            {formatTime && user.lastMessage !== "" && (
               <span className="text-[11px] font-medium text-gray-400">
                 {formatTime(user.updatedAt)}
               </span>
@@ -171,7 +178,80 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
         </p>
       </div>
 
-      {/* {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>} */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-2 sm:p-4">
+
+          <div className="bg-white w-full max-w-xs sm:max-w-md md:max-w-lg rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden animate-in scale-in duration-300">
+
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between p-3 sm:p-4 border-b bg-blue-50/80 backdrop-blur-sm">
+              <div className="min-w-0">
+                <h2 className="font-bold text-slate-900 text-sm sm:text-base truncate">{selectedUser.name}</h2>
+                <p className=" flex gap-1 py-1 items-center text-xs sm:text-sm text-gray-600 font-medium truncate block">
+                  <FaPhoneAlt />  {selectedUser.contact || "No contact info"}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="ml-2 p-2 rounded-full hover:bg-white text-slate-400 hover:text-red-500 transition-all shadow-sm border border-transparent hover:border-red-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="overflow-y-auto px-3 sm:px-4 py-3 space-y-4">
+
+              <div className="flex justify-center">
+                <div className="relative group w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 rounded-xl overflow-hidden shadow-lg border-2 border-white">
+                  {selectedUser.image ? (
+                    <img
+                      src={selectedUser.image}
+                      alt="profile"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 text-5xl sm:text-6xl md:text-7xl">
+                      <FaUser />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-xl group-hover:ring-4 ring-blue-500/20 transition-all"></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-[8px] sm:text-xs uppercase tracking-wider font-bold pl-1 mb-1">About</h3>
+                <div className="bg-blue-50/40 p-2 sm:p-3 rounded-lg border border-blue-50 shadow-sm">
+                  <p className="text-slate-700 text-xs sm:text-sm leading-relaxed">
+                    {selectedUser.about || "This user hasn't added a bio yet."}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 p-2 sm:p-4 bg-white border-t flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={() => {
+                  onClick?.();
+                  setSelectedUser(null);
+                }}
+                className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm sm:text-base font-semibold shadow-md transition-colors"
+              >
+                Send Message
+              </button>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg text-sm sm:text-base font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
