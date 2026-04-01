@@ -22,7 +22,7 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
   const prevLengthRef = useRef(messages.length);
   const [showMenu, setShowMenu] = useState(false);
   const [typingUser, setTypingUser] = useState(false);
-
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (messages.length > prevLengthRef.current) {
@@ -33,15 +33,23 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
 
   useEffect(() => {
     if (!receiverId) return;
+    let isMounted = true;
+
     const fetchMessages = async () => {
       try {
+
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/api/chat/${receiverId}`,
           { withCredentials: true }
         );
-        setMessages(res.data.chatData?.messages || []);
+        if (isMounted) {
+
+          setMessages(res.data.chatData?.messages || []);
+        }
       } catch (err) {
         console.error("Failed to load messages:", err);
+      } finally {
+        setShow(true);
       }
     };
     fetchMessages();
@@ -464,123 +472,30 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
             );
           })
 
-        ) : (
-          <div className="flex flex-col items-center justify-center h-64 p-6 text-center sm:h-80">
-            <div className="h-20 w-20 flex items-center justify-center filter grayscale">
-              <img
-                src={Logoimage}
-                alt="Company Logo"
-                className="h-full w-full object-contain"
-              />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-2">
-              No Messages Yet
-            </h2>
-            <p className="text-gray-500 mb-4 max-w-xs sm:max-w-md">
-              Your inbox is empty. Start chatting to see messages.
-            </p>
-
-          </div>
-        )}
-
-
-        {/* {messages.map((msg, index) => {
-          const isMe = String(msg.senderId) === String(currentUser.id);
-
-          const currentDate = msg.createdAt ? new Date(msg.createdAt).toDateString() : null;
-          const previousDate = index > 0 && messages[index - 1].createdAt
-            ? new Date(messages[index - 1].createdAt).toDateString()
-            : null;
-          const showDateHeader = currentDate && currentDate !== previousDate;
-          return (
-            <React.Fragment key={msg._id || index}>
-              {showDateHeader && (
-                <div className="flex justify-center my-4 sticky top-0 z-20">
-                  <span className="bg-gray-200/80 backdrop-blur-sm text-gray-600 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider min-w-[100px] text-center">
-                    {getMessageDateLabel(msg.createdAt)}
-                  </span>
-                </div>
-              )}
-
-              <div className={`flex group ${isMe ? "justify-end" : "justify-start"}`}>
-                <div className={`flex flex-col max-w-[70%] ${isMe ? "items-end" : "items-start"} relative`}>
-
-                  {isMe && (
-                    <button
-                      onClick={() => handleDeleteMessage(msg._id)}
-                      className="hidden group-hover:flex absolute -left-8 top-2 p-1 text-gray-400 hover:text-red-500 transition-all"
-                      title="Delete Message"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                  {msg.message && (
-                    <button
-                      onClick={() => handleCopyMessage(msg.message)}
-                      className={`hidden group-hover:flex absolute top-2 p-1 text-gray-400 hover:text-blue-500 transition-all 
-                         ${isMe ? "-left-14" : "-right-7"}`}
-                      title="Copy Message"
-                    >
-                      <Copy size={16} />
-                    </button>
-                  )}
-
-                  <div className={`px-3 py-2 shadow-sm 
-              ${isMe
-                      ? "bg-blue-600 text-white rounded-2xl rounded-br-none"
-                      : "bg-white text-gray-800 rounded-2xl rounded-bl-none border border-gray-100"
-                    }`}
-                  >
-                    {msg.imageUrl && (
-                      <img
-                        src={msg.imageUrl}
-                        alt="message"
-                        onClick={() => setbigImage(msg)}
-                        className="rounded-lg mb-2 max-h-72 w-full object-cover border border-black/5 cursor-pointer hover:opacity-90 transition-opacity"
-                      />
-                    )}
-                    {msg.message && <p className="text-[15px]">{msg.message}</p>}
-
-                  </div>
-
-
-                  <div className="flex ">
-                    <div className="text-[10px] text-gray-400 mt-1 px-1">
-                      {msg.pending ? ("• Sending...") : (
-                        msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {
-                          hour: '2-digit', minute: '2-digit', hour12: true
-                        }) : msg.time
-                      )}
-                    </div>
-                    {isMe && (
-                      <div className="flex justify-end mt-1 text-xs">
-                        {msg.status === "sent" && (
-                          <span className="text-gray-300 font-bold">✓</span>
-                        )}
-
-
-                        {msg.status === "delivered" && (
-                          <>
-                            <span className="text-gray-300 font-bold tracking-[-4px]">✓</span>
-                            <span className="text-gray-300 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
-                          </>
-                        )}
-
-                        {msg.status === "read" && (
-                          <>
-                            <span className="text-blue-400 font-bold tracking-[-4px]">✓</span>
-                            <span className="text-blue-400 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                </div>
+        )
+          : show ? (
+            <div className="flex flex-col items-center justify-center h-[90%] p-6 text-center sm:h-80">
+              <div className="h-20 w-20 flex items-center justify-center filter grayscale">
+                <img
+                  src={Logoimage}
+                  alt="Company Logo"
+                  className="h-full w-full object-contain"
+                />
               </div>
-            </React.Fragment>
-          );
-        })} */}
+              <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700 mb-2">
+                No Messages Yet
+              </h2>
+              <p className="text-gray-500 mb-4 max-w-xs sm:max-w-md">
+                Your inbox is empty. Start chatting to see messages.
+              </p>
+
+            </div>
+          ) : null
+        }
+
+
+
+
         <div ref={bottomRef}></div>
       </div>
 

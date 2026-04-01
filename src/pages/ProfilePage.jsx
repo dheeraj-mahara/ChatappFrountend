@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Phone, ShieldCheck, Camera, LogOut, ChevronLeft } from "lucide-react";
 import toast from "react-hot-toast";
+import { FaPencilAlt } from "react-icons/fa";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -176,12 +177,13 @@ export default function ProfilePage() {
             <div className="flex-1">
               <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Full Name</p>
               {isEditing ? (
-                <input
-
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="text-xl font-semibold w-full outline-none"
-                />
+                <div className="flex relative items-center rounded px-3 py-2">
+                  <input value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="text-xl  font-semibold w-full outline-none"
+                  />
+                  <FaPencilAlt className=" absolute right-2 opacity-[80%] text-gray-500 mr-2" />
+                </div>
               ) : (
                 <p className="text-lg font-semibold text-gray-800">
                   {currentUser?.name}
@@ -211,12 +213,17 @@ export default function ProfilePage() {
 
 
                 {isEditing ? (
-                  <input
-                    value={about}
-                    onChange={(e) => setAbout(e.target.value)}
-                    placeholder="Write about..."
-                    className="text-lg font-semibold text-gray-800 w-full outline-none"
-                  />
+                  <div className="flex relative items-center rounded px-3 py-2">
+
+                    <input
+                      value={about}
+                      onChange={(e) => setAbout(e.target.value)}
+                      placeholder="Write about..."
+                      className="text-lg font-semibold text-gray-800 w-full outline-none"
+                    />
+                    <FaPencilAlt className=" absolute right-2 opacity-[80%] text-gray-500 mr-2" />
+                  </div>
+
                 ) : (
                   <p className="text-sm font-semibold ">
                     {currentUser?.about || "Not mentioned"}
