@@ -422,7 +422,7 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
                       <div className={`flex flex-col max-w-[70%] ${isMe ? "items-end" : "items-start"} relative`}>
 
                         <div
-                          className={`absolute top-14 ${isMe ? " md:-left-30 -left-24" : "-right-20"
+                          className={`absolute md:top-2 top-12 ${isMe ? " md:-left-36 -left-24" : "-right-20"
                             } hidden group-hover:flex flex-col px-1 py-2 gap-1 bg-white shadow-lg rounded-lg border border-gray-200 z-50 text-xs  overflow-hidden`}
                         >
                           {msg.message && (
