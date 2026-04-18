@@ -1,10 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Logoimage from "../assets/images.png";
 import { FaUser } from "react-icons/fa";
 import { FaPhoneAlt } from "react-icons/fa";
+import { FiTrash2 } from "react-icons/fi";
+import { IoOpenOutline } from "react-icons/io5";
+import { TiArrowBackOutline } from "react-icons/ti";
 
-export default function UserList({ users = [], allusers = [], currentUser }) {
+
+
+export default function UserList({ users = [], allusers = [], currentUser, handleDeleteChat, handleDeleteChatUser }) {
+
 
   const navigate = useNavigate();
   const { receiverId } = useParams();
@@ -94,6 +100,8 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
                 onClick={() => handleUserClick(user.id)}
                 formatTime={formatTime}
                 currentUser={currentUser}
+                onDeleteChat={() => handleDeleteChat(user.id)}
+                onDeleteChatUser={() => handleDeleteChatUser(user.id)}
               />
             ))}
           </div>
@@ -119,15 +127,59 @@ export default function UserList({ users = [], allusers = [], currentUser }) {
   );
 }
 
-function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }) {
+function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser, onDeleteChat,
+  onDeleteChatUser, }) {
   const [selectedUser, setSelectedUser] = useState(null);
+  const [fullimgview, setfullimgview] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+
+
+
+
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const modal = event.state?.modal;
+
+      if (modal === "user") {
+        setfullimgview(null);
+      } else {
+        setSelectedUser(null);
+        setfullimgview(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setMenuOpen(false);
+    };
+
+    window.addEventListener("click", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
+
+
+
   return (
     <div className={`group flex items-center gap-4 p-3 cursor-pointer transition-all duration-200 rounded-2xl mb-1    ${isActive ? "bg-blue-50 shadow-sm" : "hover:bg-gray-50"}`}>
-
       <div className="relative group">
         <div className="w-12 h-12 rounded-2xl p-[2px] bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
 
-          <div onClick={() => setSelectedUser(user)} className="w-full h-full rounded-2xl bg-white overflow-hidden flex items-center justify-center text-gray-700 font-semibold text-lg">
+          <div onClick={() => {
+            setSelectedUser(user);
+            window.history.pushState({ modal: "user" }, "");
+          }}
+            className="w-full h-full rounded-2xl bg-white overflow-hidden flex items-center justify-center text-gray-700 font-semibold text-lg">
             {user.image ? (
               <img
                 src={user.image}
@@ -159,23 +211,78 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
 
           </p>
 
-          <div className="flex">
-
-
-
+          <div className="flex flex-col">
             {formatTime && user.lastMessage !== "" && (
               <span className="text-[11px] font-medium text-gray-400">
                 {formatTime(user.updatedAt)}
               </span>
             )}
+
+          </div>
+        </div>
+        <div className="flex justify-between items-center group">
+
+          <p className={`text-sm truncate ${isActive ? "text-blue-600/80" : "text-gray-500"}`}>
+            {isSearch ? "Tap to start chatting" : (user.lastMessage || "No messages yet")}
+          </p>
+
+          <div className="relative">
+            <h1
+              onClick={(e) => {
+                e.stopPropagation(); // user item click trigger na ho
+                setMenuOpen(!menuOpen);
+              }}
+              className="font-bold text-gray-500 cursor-pointer md:opacity-0 md:group-hover:opacity-100 transition px-2"
+            >
+              ⋯
+            </h1>
+
+
+
+            {menuOpen && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 
+               animate-in fade-in zoom-in-95 duration-150 overflow-hidden backdrop-blur-sm"
+              >
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="group flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition"
+                >
+                  <TiArrowBackOutline className="text-gray-400 group-hover:text-gray-600 transition" />
+                  Back
+                </button>
+
+                {/* Open */}
+                <button
+                  onClick={() => {
+                    onClick();
+                    setMenuOpen(false);
+                  }}
+                  className="group flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition"
+                >
+                  <IoOpenOutline className="text-gray-400 group-hover:text-gray-600 transition" />
+                  Open
+                </button>
+
+                <div className="h-px bg-gray-100 my-1"></div>
+
+                <button
+                  onClick={() => {
+                    onDeleteChatUser();
+                    setMenuOpen(false);
+                  }}
+                  className="group flex items-center gap-3 w-full px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition"
+                >
+                  <FiTrash2 className="group-hover:scale-110 transition-transform" />
+                  Delete Chat
+                </button>
+              </div>
+            )}
           </div>
 
-
-
         </div>
-        <p className={`text-sm truncate ${isActive ? "text-blue-600/80" : "text-gray-500"}`}>
-          {isSearch ? "Tap to start chatting" : (user.lastMessage || "No messages yet")}
-        </p>
+
       </div>
 
       {selectedUser && (
@@ -192,7 +299,10 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
                 </p>
               </div>
               <button
-                onClick={() => setSelectedUser(null)}
+                onClick={() => {
+                  setSelectedUser(null);
+                  window.history.back();
+                }}
                 className="ml-2 p-2 rounded-full hover:bg-white text-slate-400 hover:text-red-500 transition-all shadow-sm border border-transparent hover:border-red-100"
               >
                 ✕
@@ -202,7 +312,10 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
             <div className="overflow-y-auto px-3 sm:px-4 py-3 space-y-4">
 
               <div className="flex justify-center">
-                <div className="relative group w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 rounded-xl overflow-hidden shadow-lg border-2 border-white">
+                <div onClick={() => {
+                  setfullimgview(selectedUser);
+                  window.history.pushState({ modal: "image" }, "")
+                }} className="relative group w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 rounded-xl overflow-hidden shadow-lg border-2 border-white">
                   {selectedUser.image ? (
                     <img
                       src={selectedUser.image}
@@ -233,15 +346,18 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
             <div className="sticky bottom-0 p-2 sm:p-4 bg-white border-t flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => {
-                  onClick?.();
                   setSelectedUser(null);
+                  window.history.back();
                 }}
                 className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm sm:text-base font-semibold shadow-md transition-colors"
               >
                 Send Message
               </button>
               <button
-                onClick={() => setSelectedUser(null)}
+                onClick={() => {
+                  setSelectedUser(null);
+                  window.history.back();
+                }}
                 className="flex-1 py-2 px-4 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg text-sm sm:text-base font-medium transition-colors"
               >
                 Close
@@ -249,6 +365,35 @@ function UserItem({ user, isActive, formatTime, isSearch, onClick, currentUser }
             </div>
 
           </div>
+        </div>
+      )}
+
+      {fullimgview && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 animate-in fade-in duration-300"
+          onClick={() => {
+            setfullimgview(null);
+            window.history.back();
+          }
+          }
+        >
+          <img
+            src={fullimgview.image}
+            alt="full view"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          <button
+            onClick={() => {
+              setfullimgview(null);
+              window.history.back();
+            }
+            }
+            className="absolute top-5 right-5 text-white text-2xl font-bold"
+          >
+            ✕
+          </button>
         </div>
       )}
 

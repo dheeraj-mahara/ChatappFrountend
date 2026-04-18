@@ -6,6 +6,7 @@ import UserList from "../components/UserList";
 import ChatArea from "../components/ChatArea";
 import Logoimage from "../assets/images.png";
 import AllUsers from "../components/AllUsers";
+import toast from "react-hot-toast";
 
 
 export default function Chatpage() {
@@ -13,14 +14,16 @@ export default function Chatpage() {
   const { receiverId } = useParams();
 
   const [users, setUsers] = useState([]);
+
   const [allusers, setAllUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [removeloading, setremoveloading] = useState(false);
   const [showUser, setshowUser] = useState([]);
 
   const seealluser = location.pathname == "/chat/users"
-  
-  
+
+
 
   // Check if a chat is currently active
   const isChatOpen = Boolean(receiverId);
@@ -30,39 +33,36 @@ export default function Chatpage() {
     showUser.find((u) => String(u.id) === String(receiverId)) ||
     allusers.find((u) => String(u.id) === String(receiverId));
 
-  useEffect(() => {
-    const initChat = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/chat`, {
-          withCredentials: true,
-        });
+  const initChat = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/chat`, {
+        withCredentials: true,
+      });
 
-        if (res.data.success) {
-          
-          setCurrentUser(res.data.currentUser);
-          
-          setUsers(res.data.users);
-          setAllUsers(res.data.allUsers || []);
-        }
-      } catch (err) {
-        if (err.response?.status === 401) navigate("/login");
-        console.error("Initialization error:", err);
-      } finally {
-        setLoading(false);
+      if (res.data.success) {
+
+        setCurrentUser(res.data.currentUser);
+
+        setUsers(res.data.users);
+        setAllUsers(res.data.allUsers || []);
       }
-    };
+    } catch (err) {
+      if (err.response?.status === 401) navigate("/login");
+      console.error("Initialization error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+
     initChat();
   }, [navigate]);
 
-  // 2. Socket Connection
   useEffect(() => {
     if (!currentUser) return;
 
     socket.auth = { userId: currentUser.id };
     socket.connect();
-
-
-
     socket.on("onlineUsers", (onlineUserIds) => {
 
       const updatedUsers = users.map(u => ({
@@ -77,6 +77,8 @@ export default function Chatpage() {
       socket.disconnect();
     };
   }, [currentUser]);
+
+
 
 
   useEffect(() => {
@@ -103,6 +105,42 @@ export default function Chatpage() {
     }
   }, [selectedUser, currentUser]);
 
+  const handleDeleteChatUser = async (userId) => {
+    setremoveloading(true);
+
+    try {
+      const res = await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/chat/deletechatuser?selectedUserId=${userId}`,
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+
+        setUsers(prev => prev.filter(u => String(u.id) !== String(userId)));
+        initChat()
+
+        if (selectedUser?.id === userId) {
+          navigate("/")
+        }
+
+        toast.success("Chat deleted");
+
+      } else {
+        toast.error("Failed to delete chat");
+      }
+
+    } catch (err) {
+      console.error("Delete chat error:", err);
+      toast.error("Failed to delete chat");
+    } finally {
+      setremoveloading(false);
+    }
+  };
+
+  const handleDeleteChat = (userId) => {
+    console.log("deletetchatuser", userId);
+  }
+
   if (loading) return <ChatSkeleton />;
 
   return (
@@ -117,10 +155,12 @@ export default function Chatpage() {
             users={showUser}
             allusers={allusers}
             currentUser={currentUser}
+            handleDeleteChat={handleDeleteChat}
+            handleDeleteChatUser={handleDeleteChatUser}
           />
-         )
+        )
 
-        } 
+        }
 
       </div>
 

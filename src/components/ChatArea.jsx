@@ -132,6 +132,7 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
   };
 
 
+
   useEffect(() => {
     if (!selectedUser) return;
 
@@ -237,6 +238,12 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
       year: 'numeric'
     });
   };
+  const visibleMessages = messages.filter(
+    (msg) =>
+      !msg.deletedFor?.some(
+        (id) => id?.toString() === currentUser.id?.toString()
+      )
+  );
 
   if (!selectedUser) {
     return (
@@ -250,17 +257,25 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
     );
   }
 
-  const handleDeleteMessage = async (messageId) => {
-
+  const handleDeleteMessage = async (messageId, type = "everyone") => {
     try {
       const res = await axios.delete(
         `${import.meta.env.VITE_API_URL}/api/chat/message/${messageId}`,
-        { withCredentials: true }
+        {
+          data: { type },
+          withCredentials: true
+        }
       );
 
       if (res.data.success) {
-        toast.success("Message deleted");
-        setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+        toast.success(
+          type === "me" ? "Deleted for you" : "Deleted for everyone"
+        );
+
+        setMessages(prev =>
+          prev.filter(msg => msg._id !== messageId)
+        );
+
       }
     } catch (err) {
       console.error("Delete error:", err);
@@ -374,16 +389,25 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar">
 
         {messages.length > 0 ? (
-          messages.map((msg, index) => {
+          visibleMessages.map((msg, index) => {
             const isMe = String(msg.senderId) === String(currentUser.id);
 
             const currentDate = msg.createdAt ? new Date(msg.createdAt).toDateString() : null;
             const previousDate = index > 0 && messages[index - 1].createdAt
               ? new Date(messages[index - 1].createdAt).toDateString()
               : null;
-            const showDateHeader = currentDate && currentDate !== previousDate;
+                const prevMsg = visibleMessages[index - 1];
+
+
+  const showDateHeader =
+    !prevMsg ||
+    new Date(prevMsg.createdAt).toDateString() !==
+      new Date(msg.createdAt).toDateString();
+
             return (
               <React.Fragment key={msg._id || index}>
+
+
                 {showDateHeader && (
                   <div className="flex justify-center my-4 sticky top-0 z-20">
                     <span className="bg-gray-200/80 backdrop-blur-sm text-gray-600 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider min-w-[100px] text-center">
@@ -392,82 +416,112 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
                   </div>
                 )}
 
-                <div className={`flex group ${isMe ? "justify-end" : "justify-start"}`}>
-                  <div className={`flex flex-col max-w-[70%] ${isMe ? "items-end" : "items-start"} relative`}>
+                {!msg.deletedFor?.includes(currentUser.id) && (
+                  <>
+                    <div className={`flex group ${isMe ? "justify-end" : "justify-start"}`}>
+                      <div className={`flex flex-col max-w-[70%] ${isMe ? "items-end" : "items-start"} relative`}>
 
-                    {isMe && (
-                      <button
-                        onClick={() => handleDeleteMessage(msg._id)}
-                        className="hidden group-hover:flex absolute -left-8 top-2 p-1 text-gray-400 hover:text-red-500 transition-all"
-                        title="Delete Message"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                    {msg.message && (
-                      <button
-                        onClick={() => handleCopyMessage(msg.message)}
-                        className={`hidden group-hover:flex absolute top-2 p-1 text-gray-400 hover:text-blue-500 transition-all 
-                         ${isMe ? "-left-14" : "-right-7"}`}
-                        title="Copy Message"
-                      >
-                        <Copy size={16} />
-                      </button>
-                    )}
+                        <div
+                          className={`absolute top-14 ${isMe ? " md:-left-30 -left-24" : "-right-20"
+                            } hidden group-hover:flex flex-col px-1 py-2 gap-1 bg-white shadow-lg rounded-lg border border-gray-200 z-50 text-xs  overflow-hidden`}
+                        >
+                          {msg.message && (
+                            <button
+                              onClick={() => handleCopyMessage(msg.message)}
+                              className="flex items-center gap-2 text-gray-600 hover:bg-gray-100 transition"
+                            >
+                              <Copy size={16} className="text-gray-400" />
+                              Copy
+                            </button>
+                          )}
 
-                    <div className={`px-3 py-2 shadow-sm 
-              ${isMe
-                        ? "bg-blue-600 text-white rounded-2xl rounded-br-none"
-                        : "bg-white text-gray-800 rounded-2xl rounded-bl-none border border-gray-100"
-                      }`}
-                    >
-                      {msg.imageUrl && (
-                        <img
-                          src={msg.imageUrl}
-                          alt="message"
-                          onClick={() => setbigImage(msg)}
-                          className="rounded-lg mb-2 max-h-72 w-full object-cover border border-black/5 cursor-pointer hover:opacity-90 transition-opacity"
-                        />
-                      )}
-                      {msg.message && <p className="text-[15px]">{msg.message}</p>}
-
-                    </div>
-
-
-                    <div className="flex ">
-                      <div className="text-[10px] text-gray-400 mt-1 px-1">
-                        {msg.pending ? ("• Sending...") : (
-                          msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit', minute: '2-digit', hour12: true
-                          }) : msg.time
-                        )}
-                      </div>
-                      {isMe && (
-                        <div className="flex justify-end mt-1 text-xs">
-                          {msg.status === "sent" && (
-                            <span className="text-gray-300 font-bold">✓</span>
+                          {msg.message && isMe && (
+                            <div className="h-px bg-gray-200 mx-2"></div>
                           )}
 
 
-                          {msg.status === "delivered" && (
-                            <>
-                              <span className="text-gray-300 font-bold tracking-[-4px]">✓</span>
-                              <span className="text-gray-300 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
-                            </>
-                          )}
+                          <button
+                            onClick={() => handleDeleteMessage(msg._id, "me")}
+                            className="flex items-center gap-2   text-red-400 hover:bg-gray-100 transition"
+                          >
+                            <Trash2 size={16} className="text-red-400" />
+                            {isMe ? (
+                              <>
+                                <span className="md:block  hidden">Delete</span> for me
+                              </>
+                            ) : (
+                              "Delete"
+                            )}
+                          </button>
 
-                          {msg.status === "read" && (
-                            <>
-                              <span className="text-blue-400 font-bold tracking-[-4px]">✓</span>
-                              <span className="text-blue-400 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
-                            </>
+                          {isMe && (
+                            <button
+                              onClick={() => handleDeleteMessage(msg._id, "everyone")}
+                              className="flex items-center gap-2  text-red-600 hover:bg-red-50 transition"
+                            >
+                              <Trash2 size={16} className="text-red-400" />
+                              <span className="md:block hidden">Delete</span>   for everyone
+                            </button>
                           )}
                         </div>
-                      )}
-                    </div>
 
-                  </div>
-                </div>
+
+
+                        <div className={`px-3 py-2 shadow-sm 
+              ${isMe
+                            ? "bg-blue-600 text-white rounded-2xl rounded-br-none"
+                            : "bg-white text-gray-800 rounded-2xl rounded-bl-none border border-gray-100"
+                          }`}
+                        >
+                          {msg.imageUrl && (
+                            <img
+                              src={msg.imageUrl}
+                              alt="message"
+                              onClick={() => setbigImage(msg)}
+                              className="rounded-lg mb-2 max-h-72 w-full object-cover border border-black/5 cursor-pointer hover:opacity-90 transition-opacity"
+                            />
+                          )}
+                          {msg.message && <p className="text-[15px]">{msg.message}</p>}
+
+                        </div>
+
+
+
+                        <div className="flex ">
+                          <div className="text-[10px] text-gray-400 mt-1 px-1">
+                            {msg.pending ? ("• Sending...") : (
+                              msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit', minute: '2-digit', hour12: true
+                              }) : msg.time
+                            )}
+                          </div>
+                          {isMe && (
+                            <div className="flex justify-end mt-1 text-xs">
+                              {msg.status === "sent" && (
+                                <span className="text-gray-300 font-bold">✓</span>
+                              )}
+
+
+                              {msg.status === "delivered" && (
+                                <>
+                                  <span className="text-gray-300 font-bold tracking-[-4px]">✓</span>
+                                  <span className="text-gray-300 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
+                                </>
+                              )}
+
+                              {msg.status === "read" && (
+                                <>
+                                  <span className="text-blue-400 font-bold tracking-[-4px]">✓</span>
+                                  <span className="text-blue-400 font-bold tracking-[-4px] pr-[1px] pt-[2px]">✓</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </React.Fragment>
             );
           })
@@ -611,15 +665,30 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
                 </button>
 
                 {String(bigImage.senderId) === String(currentUser.id) && (
-                  <button className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-red-500/10 hover:text-red-400 rounded-md"
-                    onClick={() => {
-                      handleDeleteMessage(bigImage._id);
-                      setbigImage(null);
-                      setShowMenu(false);
-                    }}
-                  >
-                    <Trash2 size={14} /> Delete
-                  </button>
+                  <>
+                    <button
+                      className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-red-500/10 hover:text-red-400 rounded-md"
+                      onClick={() => {
+                        handleDeleteMessage(bigImage._id, "everyone");
+                        setbigImage(null);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <Trash2 size={14} /> Delete for everyone
+                    </button>
+
+                    <button
+                      className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-gray-500/10 hover:text-gray-300 rounded-md"
+                      onClick={() => {
+                        handleDeleteMessage(bigImage._id, "me");
+                        setbigImage(null);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <Trash2 size={14} /> Delete for me
+                    </button>
+                  </>
+
                 )}
 
                 <button className="flex items-center gap-2 px-2 py-1 text-xs text-white hover:bg-blue-500/10 hover:text-blue-400 rounded-md"
