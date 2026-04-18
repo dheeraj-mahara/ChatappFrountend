@@ -68,6 +68,7 @@ export default function ProfilePage() {
 
       if (res.data.success) {
         toast.success("Logged out successfully!");
+        localStorage.removeItem('token');
         setCurrentUser(null);
         navigate("/login");
       }

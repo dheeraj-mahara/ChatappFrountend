@@ -62,6 +62,9 @@ const handleSubmit = async (e) => {
         timeout: 10000 // ⏳ network slow ho to bhi handle
       }
     );
+    if (response.data.token) {
+  localStorage.setItem('token', response.data.token);
+}
 
     toast.success("Login Successful!", {
       duration: 900,

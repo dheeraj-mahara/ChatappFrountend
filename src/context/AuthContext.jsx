@@ -11,10 +11,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const token = localStorage.getItem('token');
+
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/api/auth/me`,
-          { withCredentials: true }
-        );
+          {
+            withCredentials: true,
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
 
         setCurrentUser(res.data.user);
       } catch (err) {
