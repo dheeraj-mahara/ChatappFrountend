@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.vercel.chat_vibe_theta.twa",
+    "sha256_cert_fingerprints": [
+      "49:B5:95:20:B3:79:F7:50:B0:1F:E4:45:23:BC:67:B2:87:AB:C2:C3:29:9A:8A:41:0D:CC:C4:53:2F:D4:F0:CD"
+    ]
+  }
+}]

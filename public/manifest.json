@@ -2,7 +2,7 @@
   "id": "/",
   "name": "ChatVibe",
   "short_name": "ChatVibe",
-  "description": "Real-time Chat Application - apne doston se connect karo",
+  "description": "Real-time Chat Application - connect with your friend's",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
