@@ -3,10 +3,19 @@
     {
       "source": "/.well-known/assetlinks.json",
       "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/json"
-        }
+        {"key": "Content-Type", "value": "application/json"}
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
+      ]
+    },
+    {
+      "source": "/firebase-messaging-sw.js",
+      "headers": [
+        {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
       ]
     }
   ]
