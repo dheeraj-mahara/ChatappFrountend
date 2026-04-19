@@ -66,7 +66,6 @@ export default function ProfilePage() {
         { withCredentials: true }
       );
 
-      // work
 
       if (res.data.success) {
         toast.success("Logged out successfully!");
