@@ -15,6 +15,7 @@ import axios from "axios";
 import { messaging } from "./firebase";
 import { getToken } from "firebase/messaging";
 import { useAuth } from "./context/AuthContext";
+import NotFound from "./components/NotFound"
 
 function App() {
 
@@ -129,6 +130,7 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="post" element={<Postpage />} />
             <Route path="call" element={<Callpage />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </BrowserRouter>
