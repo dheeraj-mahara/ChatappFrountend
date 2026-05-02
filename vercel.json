@@ -1,38 +1,15 @@
 {
- 
-  "routes": [
-    {
-      "src": "^/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "^/(.*)$",
-      "dest": "/index.html"
-    }
-  ],
   "headers": [
     {
-      "source": "/",
+      "source": "/.well-known/assetlinks.json",
       "headers": [
-        {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
+        {"key": "Content-Type", "value": "application/json"}
       ]
     },
     {
       "source": "/assets/(.*)",
       "headers": [
         {"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}
-      ]
-    },
-    {
-      "source": "/.well-known/assetlinks.json",
-      "headers": [
-        {"key": "Content-Type", "value": "application/json"}
       ]
     },
     {
