@@ -7,14 +7,14 @@ export default function CallArea({ callState, onEnd, onReject }) {
   const { user, mode, type } = callState;
 
   const {
-    localVideoRef,
-    remoteVideoRef,
-    isMuted,
-    isCamOff,
-    remoteReady,
-    toggleMute,
-    toggleCam,
-  } = useWebRTC(callState, currentUser);
+  setLocalRef,
+  setRemoteRef,
+  isMuted,
+  isCamOff,
+  remoteReady,
+  toggleMute,
+  toggleCam,
+} = useWebRTC(callState, currentUser);
 
   if (!user) {
     return (
@@ -32,12 +32,12 @@ export default function CallArea({ callState, onEnd, onReject }) {
         <div className="w-full h-full relative bg-black">
 
           {/* Remote video — full screen */}
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
+         <video
+  ref={setRemoteRef}   // ✅ ref callback
+  autoPlay
+  playsInline
+  className="w-full h-full object-cover bg-black"
+/>
 
           {/* Agar remote stream nahi aayi abhi */}
           {!remoteReady && (
@@ -48,12 +48,12 @@ export default function CallArea({ callState, onEnd, onReject }) {
 
           {/* Local video — corner */}
           <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute bottom-24 right-4 w-28 h-20 rounded-xl border-2 border-white object-cover"
-          />
+  ref={setLocalRef}    // ✅ ref callback
+  autoPlay
+  playsInline
+  muted
+  className="absolute bottom-24 right-4 w-28 h-20 rounded-xl border-2 border-white object-cover"
+/>
         </div>
 
       ) : (
