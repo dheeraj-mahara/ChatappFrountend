@@ -8,26 +8,28 @@ const ICE_SERVERS = {
   ],
 };
 
+// ✅ Global flag — component re-mount se reset nahi hoga
+let webrtcSetupDone = false;
+
 export function useWebRTC(callState, currentUser) {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(null);
-  const isSetupDone = useRef(false); // ✅ double setup rokne ke liye
 
   const [isMuted, setIsMuted] = useState(false);
   const [isCamOff, setIsCamOff] = useState(false);
   const [remoteReady, setRemoteReady] = useState(false);
 
   const getUserId = (u) => u?._id || u?.id || u?.userid;
-  const toUserId = getUserId(callState.user);
+  const toUserId = getUserId(callState?.user);
 
-  // ── Video element mount hone par stream assign karo ──
   const setRemoteRef = useCallback((node) => {
     remoteVideoRef.current = node;
     if (node && remoteStreamRef.current) {
       node.srcObject = remoteStreamRef.current;
+      console.log("setRemoteRef: stream assigned ✅");
     }
   }, []);
 
@@ -39,6 +41,9 @@ export function useWebRTC(callState, currentUser) {
   }, []);
 
   const getMedia = async () => {
+    // ✅ Pehle se stream hai to reuse karo
+    if (localStreamRef.current) return localStreamRef.current;
+
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: callState.type === "video",
@@ -51,7 +56,6 @@ export function useWebRTC(callState, currentUser) {
   };
 
   const createPeer = (stream) => {
-    // ✅ Pehle wala band karo
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
@@ -63,12 +67,19 @@ export function useWebRTC(callState, currentUser) {
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
     pc.ontrack = (e) => {
-      console.log("ontrack ✅", e.streams[0]);
-      const stream = e.streams[0];
-      remoteStreamRef.current = stream;
+      const incoming = e.streams[0];
+      console.log("ontrack ✅", incoming.id);
+
+      // ✅ Already same stream hai to skip karo
+      if (remoteStreamRef.current?.id === incoming.id) {
+        console.log("Same stream, skip");
+        return;
+      }
+
+      remoteStreamRef.current = incoming;
 
       if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = stream;
+        remoteVideoRef.current.srcObject = incoming;
       }
       setRemoteReady(true);
     };
@@ -87,12 +98,12 @@ export function useWebRTC(callState, currentUser) {
   };
 
   const stopCall = () => {
+    webrtcSetupDone = false; // ✅ Reset global flag
     pcRef.current?.close();
     pcRef.current = null;
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
     remoteStreamRef.current = null;
-    isSetupDone.current = false;
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     setRemoteReady(false);
@@ -108,21 +119,25 @@ export function useWebRTC(callState, currentUser) {
     setIsCamOff((p) => !p);
   };
 
-  // ✅ Sirf EK baar sab setup karo
   useEffect(() => {
     if (callState.mode !== "ongoing") {
       if (callState.mode === "idle") stopCall();
       return;
     }
 
-    // ✅ Agar already setup ho chuka hai to dobara mat karo
-    if (isSetupDone.current) return;
-    isSetupDone.current = true;
+    // ✅ Global flag check
+    if (webrtcSetupDone) {
+      console.log("Setup already done, skip");
+      return;
+    }
+    webrtcSetupDone = true;
 
     const isCaller = callState.initiator === true;
+    console.log("WebRTC setup start —", isCaller ? "CALLER" : "RECEIVER");
 
-    // ── Offer/Answer handlers ──
     const onOffer = async ({ offer }) => {
+      // ✅ Caller ko offer nahi sunna chahiye
+      if (isCaller) return;
       console.log("Offer received ✅");
       try {
         const stream = await getMedia();
@@ -138,6 +153,8 @@ export function useWebRTC(callState, currentUser) {
     };
 
     const onAnswer = async ({ answer }) => {
+      // ✅ Receiver ko answer nahi sunna chahiye
+      if (!isCaller) return;
       console.log("Answer received ✅");
       try {
         const pc = pcRef.current;
@@ -159,7 +176,6 @@ export function useWebRTC(callState, currentUser) {
       } catch (_) {}
     };
 
-    // ✅ Pehle listeners lagao, phir offer bhejo
     socket.on("webrtc-offer", onOffer);
     socket.on("webrtc-answer", onAnswer);
     socket.on("ice-candidate", onIce);
@@ -184,12 +200,11 @@ export function useWebRTC(callState, currentUser) {
       socket.off("webrtc-answer", onAnswer);
       socket.off("ice-candidate", onIce);
     };
-
-  }, [callState.mode]); // ✅ sirf mode change par
+  }, [callState.mode]);
 
   return {
-    setLocalRef,   // ← ref callback
-    setRemoteRef,  // ← ref callback
+    setLocalRef,
+    setRemoteRef,
     isMuted,
     isCamOff,
     remoteReady,
