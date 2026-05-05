@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import socket from "../socket";
 import { FiArrowLeft } from "react-icons/fi";
 import { Copy, Download, MoreVertical, Share2, Trash2, X } from "lucide-react";
@@ -335,6 +335,42 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
     }
   };
 
+  const navigate = useNavigate();
+const handleVoiceCall = () => {
+  if (!selectedUser?.id) return;
+
+  socket.emit("call-user", {
+    to: selectedUser.id,
+    from: currentUser.id,
+    type: "voice",
+  });
+
+  navigate("/call", {
+    state: {
+      user: selectedUser,
+      type: "voice",
+      mode: "calling",
+    },
+  });
+};
+
+const handleVideoCall = () => {
+  if (!selectedUser?.id) return;
+
+  socket.emit("call-user", {
+    to: selectedUser.id,
+    from: currentUser.userid,
+    type: "video",
+  });
+
+  navigate("/call", {
+    state: {
+      user: selectedUser,
+      type: "video",
+      mode: "calling",
+    },
+  });
+};
 
 
 
@@ -383,6 +419,33 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
             }
           </div>
         </div>
+
+        <div className="ml-auto flex items-center gap-2">
+
+          <button
+            onClick={handleVoiceCall}
+            disabled={!selectedUser.online}
+            className={`p-2 rounded-xl transition ${selectedUser.online
+              ? "bg-green-500 text-white hover:bg-green-600"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+          >
+            📞
+          </button>
+
+          {/* Video Call */}
+          <button
+            onClick={handleVideoCall}
+            disabled={!selectedUser.online}
+            className={`p-2 rounded-xl transition ${selectedUser.online
+              ? "bg-indigo-500 text-white hover:bg-indigo-600"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+          >
+            🎥
+          </button>
+
+        </div>
       </div>
 
       {/* MESSAGES AREA */}
@@ -396,13 +459,13 @@ export default function ChatArea({ selectedUser, currentUser, onBack }) {
             const previousDate = index > 0 && messages[index - 1].createdAt
               ? new Date(messages[index - 1].createdAt).toDateString()
               : null;
-                const prevMsg = visibleMessages[index - 1];
+            const prevMsg = visibleMessages[index - 1];
 
 
-  const showDateHeader =
-    !prevMsg ||
-    new Date(prevMsg.createdAt).toDateString() !==
-      new Date(msg.createdAt).toDateString();
+            const showDateHeader =
+              !prevMsg ||
+              new Date(prevMsg.createdAt).toDateString() !==
+              new Date(msg.createdAt).toDateString();
 
             return (
               <React.Fragment key={msg._id || index}>

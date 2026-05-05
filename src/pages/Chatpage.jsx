@@ -7,9 +7,14 @@ import ChatArea from "../components/ChatArea";
 import Logoimage from "../assets/images.png";
 import AllUsers from "../components/AllUsers";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
+
 
 
 export default function Chatpage() {
+  const { onlineUsers } = useAuth();
+  
+
   const navigate = useNavigate();
   const { receiverId } = useParams();
 
@@ -58,26 +63,16 @@ export default function Chatpage() {
     initChat();
   }, [navigate]);
 
-  useEffect(() => {
-    if (!currentUser) return;
+ useEffect(() => {
+  if (!users.length) return;
 
-    socket.auth = { userId: currentUser.id };
-    socket.connect();
-    socket.on("onlineUsers", (onlineUserIds) => {
+  const updatedUsers = users.map(u => ({
+    ...u,
+    online: onlineUsers.includes(u.id), 
+  }));
 
-      const updatedUsers = users.map(u => ({
-        ...u,
-        online: onlineUserIds.includes(u.id)
-      }));
-
-      setshowUser(updatedUsers);
-    });
-    return () => {
-      socket.off("updateUserStatus");
-      socket.disconnect();
-    };
-  }, [currentUser]);
-
+  setshowUser(updatedUsers);
+}, [users, onlineUsers]);
 
 
 

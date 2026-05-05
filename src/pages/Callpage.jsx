@@ -1,40 +1,176 @@
-import React from 'react'
+import React, { useEffect, useRef } from "react";
+import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import socket from "../socket";
+import CallUserList from "../components/CallUserList";
+import CallArea from "../components/CallArea";
+import { toast } from "react-toastify";
 
-export default function Callpage() {
+const CALL_MODES = {
+  IDLE: "idle",
+  CALLING: "calling",
+  INCOMING: "incoming",
+  ONGOING: "ongoing",
+};
+
+export default function CallPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUser } = useAuth();
+
+  const [users, setUsers] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [mobileView, setMobileView] = React.useState("list");
+
+  const [callState, setCallState] = React.useState({
+    user: null,
+    type: null,
+    mode: CALL_MODES.IDLE,
+  });
+
+  const callStateRef = useRef(callState);
+  useEffect(() => {
+    callStateRef.current = callState;
+  }, [callState]);
+
+  const getUserId = (u) => u?._id || u?.id || u?.userid;
+
+  useEffect(() => {
+    if (location.state) {
+      setCallState(location.state);
+      setMobileView("call");
+    }
+  }, [location.state]);
+
+  const initChat = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/chat`,
+        { withCredentials: true }
+      );
+      if (res.data.success) {
+        const filtered = res.data.users.filter(
+          (u) => u.id !== currentUser?.userid
+        );
+        setUsers(filtered);
+      }
+    } catch (err) {
+      if (err.response?.status === 401) navigate("/login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) initChat();
+  }, [currentUser]);
+
+  const handleEnd = () => {
+    const user = callStateRef.current?.user;
+    const userId = getUserId(user);
+    if (userId) {
+      socket.emit("call-ended", { to: userId });
+    }
+    setCallState({ user: null, type: null, mode: CALL_MODES.IDLE });
+    setMobileView("list");
+  };
+
+  const handleReject = () => {
+    const user = callStateRef.current?.user;
+    const userId = getUserId(user);
+    if (userId) {
+      socket.emit("call-rejected", { to: userId });
+    }
+    setCallState({ user: null, type: null, mode: CALL_MODES.IDLE });
+    setMobileView("list");
+  };
+
+ const handleCall = (user, type) => {
+  setCallState({ user, type, mode: CALL_MODES.CALLING, initiator: true }); // ← initiator add
+  setMobileView("call");
+  socket.emit("call-user", {
+    to: getUserId(user),
+    from: currentUser.userid,
+    type,
+  });
+};
+
+  // ✅ Sirf EK useEffect — sab listeners yahan
+  useEffect(() => {
+    const onAccepted = () => {
+      setCallState((prev) => ({ ...prev, mode: CALL_MODES.ONGOING }));
+      setMobileView("call");
+    };
+    const onRejected = () => {
+      toast.error("Call rejected");
+      setCallState({ user: null, type: null, mode: CALL_MODES.IDLE });
+      setMobileView("list");
+    };
+    const onEnded = () => {
+      setCallState({ user: null, type: null, mode: CALL_MODES.IDLE });
+      setMobileView("list");
+    };
+    const onFailed = (data) => {
+      toast.error(data.message);
+      setCallState({ user: null, type: null, mode: CALL_MODES.IDLE });
+      setMobileView("list");
+    };
+
+    socket.on("call-accepted", onAccepted);
+    socket.on("call-rejected", onRejected);
+    socket.on("call-ended", onEnded);
+    socket.on("call-failed", onFailed);
+
+    return () => {
+      socket.off("call-accepted", onAccepted);
+      socket.off("call-rejected", onRejected);
+      socket.off("call-ended", onEnded);
+      socket.off("call-failed", onFailed);
+    };
+  }, []);
+
+  // ✅ 30s timeout — caller aur receiver dono ke liye
+  useEffect(() => {
+    if (
+      callState.mode === CALL_MODES.CALLING ||
+      callState.mode === CALL_MODES.INCOMING
+    ) {
+      const timer = setTimeout(() => {
+        toast.info("Call timed out");
+        handleEnd();
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [callState.mode]);
+
+  if (loading) return <div>Loading...</div>;
+
   return (
-    <div className="min-h-[100%] flex items-center justify-center bg-gray-50 px-6">
-      <div className="text-center space-y-4 p-6 bg-white border border-gray-100 shadow-xl rounded-3xl max-w-sm w-full">
-        
-        {/* Phone/Calling Icon */}
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-2xl mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-          </svg>
+    <div className="h-screen">
+      <div className="md:hidden h-full">
+        {mobileView === "list" ? (
+          <CallUserList users={users} onCall={handleCall} />
+        ) : (
+          <CallArea
+            callState={callState}
+            onEnd={handleEnd}
+            onReject={handleReject}
+          />
+        )}
+      </div>
+      <div className="hidden md:flex h-full">
+        <div className="w-1/3 border-r">
+          <CallUserList users={users} onCall={handleCall} />
         </div>
-
-        <h1 className="text-2xl font-bold text-gray-800">Call Feature</h1>
-        
-        <p className="text-gray-500 leading-relaxed">
-          The calling dashboard is <span className="font-semibold text-green-600">under development</span>. 
-          Voice and Video calls are coming soon!
-        </p>
-
-        {/* Status indicator */}
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-          </span>
-          <span className="text-sm font-medium text-gray-400 uppercase tracking-widest">In Progress</span>
+        <div className="flex-1">
+          <CallArea
+            callState={callState}
+            onEnd={handleEnd}
+            onReject={handleReject}
+          />
         </div>
-
-        <button 
-          onClick={() => window.history.back()}
-          className="mt-6 w-full py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all active:scale-95"
-        >
-          Go Back
-        </button>
       </div>
     </div>
-  )
+  );
 }

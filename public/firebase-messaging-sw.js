@@ -13,7 +13,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-const CACHE_NAME = "chatvibe-cache-v4";
+const CACHE_NAME = "chatvibe-cache-v5";
 const urlsToCache = [
   "/",
   "/index.html",
