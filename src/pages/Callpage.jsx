@@ -144,8 +144,35 @@ export default function CallPage() {
     }
   }, [callState.mode]);
 
-  if (loading) return <div>Loading...</div>;
+if (loading) {
+  return (
+    <div className="h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-black to-indigo-800 text-white relative">
 
+      <div className="animate-pulse flex flex-col items-center">
+
+        {/* Avatar */}
+        <div className="w-36 h-36 bg-gray-500 rounded-full mb-6 shadow-xl"></div>
+
+        {/* Name */}
+        <div className="h-6 w-44 bg-gray-500 rounded mb-3"></div>
+
+        {/* Status */}
+        <div className="h-4 w-32 bg-gray-600 rounded"></div>
+
+        {/* Buttons */}
+        <div className="flex gap-6 mt-10">
+          <div className="w-16 h-16 bg-red-500/70 rounded-full"></div>
+          <div className="w-16 h-16 bg-green-500/70 rounded-full"></div>
+        </div>
+
+      </div>
+
+      {/* Soft Pulse Ring */}
+      <div className="absolute w-64 h-64 border border-indigo-400 rounded-full opacity-10 animate-ping"></div>
+
+    </div>
+  );
+}
   return (
     <div className="h-screen">
       <div className="md:hidden h-full">

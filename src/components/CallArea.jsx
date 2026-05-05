@@ -11,6 +11,7 @@ export default function CallArea({ callState, onEnd, onReject }) {
     remoteVideoRef,
     isMuted,
     isCamOff,
+    remoteReady,
     toggleMute,
     toggleCam,
   } = useWebRTC(callState, currentUser);
@@ -24,31 +25,39 @@ export default function CallArea({ callState, onEnd, onReject }) {
   }
 
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-800 to-black text-white relative">
+    <div className="h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-800 to-black text-white relative overflow-hidden">
 
-      {/* VIDEO MODE */}
-      {type === "video" && mode === "ongoing" && (
-        <div className="w-full h-full relative">
-          {/* Remote video (full screen) */}
+      {type === "video" && mode === "ongoing" ? (
+        // ── VIDEO MODE ──────────────────────────────────
+        <div className="w-full h-full relative bg-black">
+
+          {/* Remote video — full screen */}
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
             className="w-full h-full object-cover"
           />
-          {/* Local video (corner) */}
+
+          {/* Agar remote stream nahi aayi abhi */}
+          {!remoteReady && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60">
+              <p className="text-white text-sm">Connecting video...</p>
+            </div>
+          )}
+
+          {/* Local video — corner */}
           <video
             ref={localVideoRef}
             autoPlay
             playsInline
             muted
-            className="absolute bottom-20 right-4 w-32 h-24 rounded-lg border-2 border-white object-cover"
+            className="absolute bottom-24 right-4 w-28 h-20 rounded-xl border-2 border-white object-cover"
           />
         </div>
-      )}
 
-      {/* VOICE MODE ya calling state */}
-      {(type === "voice" || mode !== "ongoing") && (
+      ) : (
+        // ── VOICE / CALLING MODE ─────────────────────────
         <>
           <div className="mb-6">
             {user.image ? (
@@ -72,18 +81,18 @@ export default function CallArea({ callState, onEnd, onReject }) {
           </p>
 
           {(mode === "calling" || mode === "incoming") && (
-            <div className="absolute w-60 h-60 border-4 border-indigo-400 rounded-full animate-ping opacity-20"></div>
+            <div className="absolute w-60 h-60 border-4 border-indigo-400 rounded-full animate-ping opacity-20" />
           )}
         </>
       )}
 
-      {/* CONTROLS */}
-      <div className="absolute bottom-6 flex gap-4">
+      {/* ── CONTROLS ────────────────────────────────────── */}
+      <div className="absolute bottom-6 flex gap-4 z-10">
         {mode === "ongoing" && (
           <>
             <button
               onClick={toggleMute}
-              className="p-3 bg-gray-600 hover:bg-gray-500 rounded-full"
+              className="p-3 bg-gray-700 hover:bg-gray-600 rounded-full text-white"
             >
               {isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
             </button>
@@ -91,7 +100,7 @@ export default function CallArea({ callState, onEnd, onReject }) {
             {type === "video" && (
               <button
                 onClick={toggleCam}
-                className="p-3 bg-gray-600 hover:bg-gray-500 rounded-full"
+                className="p-3 bg-gray-700 hover:bg-gray-600 rounded-full text-white"
               >
                 {isCamOff ? <FaVideoSlash /> : <FaVideo />}
               </button>
