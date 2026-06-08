@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logo from "/src/assets/logo.png";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +22,14 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  useEffect(() => {
+      const token = localStorage.getItem("token");
+  
+      if (token) {
+          navigate("/chat");
+      }
+  }, [navigate]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: "" });
@@ -42,7 +50,7 @@ const Login = () => {
         duration: 900,
         style: { borderRadius: "10px", background: "#fff", color: "#065f46", fontWeight: "500" }
       });
-      setTimeout(() => navigate("/"), 900);
+      setTimeout(() => navigate("/chat"), 900);
     } catch (error) {
       const message =
         error.response?.data?.message || error.code === "ECONNABORTED"

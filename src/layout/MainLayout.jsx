@@ -7,7 +7,7 @@ import Sidebar from "../components/Sidebar";
 export default function MainLayout() {
 
     const location = useLocation()
-    const hidenav = location.pathname.startsWith("/chat")
+    const hidenav = location.pathname.startsWith("/chat/")
 
     return (
         <div className="h-screen  flex flex-col md:flex-row ">

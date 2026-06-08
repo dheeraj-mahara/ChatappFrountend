@@ -19,6 +19,7 @@ import NotFound from "./components/NotFound"
 import socket from "./socket"
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import LandingPage from "./pages/LandingPage"
 
 function App() {
   const navigate = useNavigate();
@@ -147,7 +148,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
-        <Route path="/" element={<MainLayout />}>
+
+        {/* <Route path="/" element={<MainLayout />}>
           <Route index element={<Chatpage />} />
           <Route path="/chat/users" element={<Chatpage />} />
           <Route path="/chat/:receiverId" element={<Chatpage />} />
@@ -156,8 +158,24 @@ function App() {
           <Route path="post" element={<Postpage />} />
           <Route path="call" element={<Callpage />} />
           <Route path="*" element={<NotFound />} />
+        </Route> */}
+
+        <Route path="/" element={<LandingPage />} />
+
+        <Route element={<MainLayout />}>
+          <Route path="/chat" element={<Chatpage />} />
+          <Route path="/chat/users" element={<Chatpage />} />
+          <Route path="/chat/:receiverId" element={<Chatpage />} />
+          <Route path="status" element={<StatusPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="post" element={<Postpage />} />
+          <Route path="call" element={<Callpage />} />
+          <Route path="*" element={<NotFound />} />
+
         </Route>
+
       </Routes>
+
       <ToastContainer position="top-right" autoClose={2000} />
     </>
   );
