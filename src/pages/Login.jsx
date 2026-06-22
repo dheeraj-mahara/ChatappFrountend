@@ -22,13 +22,29 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  useEffect(() => {
-      const token = localStorage.getItem("token");
-  
-      if (token) {
-          navigate("/chat");
+ useEffect(() => {
+  const checkAuth = async () => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/auth/me`,
+        {
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      if (res.data.success && token) {
+        navigate("/chat");
       }
-  }, [navigate]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  checkAuth();
+}, [navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

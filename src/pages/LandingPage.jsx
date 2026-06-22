@@ -5,13 +5,13 @@ import { useEffect } from "react";
 export default function LandingPage() {
     const navigate = useNavigate();
 
-       useEffect(() => {
-        const token = localStorage.getItem("token");
+    //    useEffect(() => {
+    //     const token = localStorage.getItem("token");
 
-        if (token) {
-            navigate("/chat");
-        }
-    }, [navigate]);
+    //     if (token) {
+    //         navigate("/chat");
+    //     }
+    // }, [navigate]);
 
     return (
         <>
