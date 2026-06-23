@@ -25,7 +25,7 @@ export default function AllUsers({ allusers = [] }) {
 
       <div className="flex items-center gap-4 pb-3 px-2 border-b border-gray-100 ">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/chat")}
           className="group flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-600 transition-all hover:bg-gray-100 hover:text-blue-600 active:scale-90"
         >
           <svg

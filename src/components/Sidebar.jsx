@@ -5,7 +5,7 @@ import { IoIosCall } from "react-icons/io";
 export default function Sidebar() {
   return (
     <div className="flex flex-row justify-around  gap-5 p-1 md:justify-start md:flex-col md:pt-5 h-full items-center text-sm text-gray-700 bg-[#f0f0f0]"> 
-         <NavLink to="/">
+         <NavLink to="/chat">
       <button className=" pt-[3px] flex flex-col items-center hover:text-blue-500 transition">
         <FaRocketchat size={20} />
         <span className="text-[11px]">Chats</span>
